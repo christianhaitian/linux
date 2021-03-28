@@ -47,6 +47,14 @@ Once the kernel build is done, you should have an Image and the following dtb fi
 
 New kernel driver modules will need to be copied to the EXT4 partition:
 `sudo make modules_install ARCH=arm64 INSTALL_MOD_PATH=./<ext4 partition location> && sync`
+
+Make sure to install the compatible libmali video drivers to the EXT4 partition:
+```
+cd video_drivers
+7z e rk3326_r13p0_gbm_with_vulkan_and_cl.7z
+sudo cp libmali.so_rk3326_gbm_arm64_r13p0_with_vulkan_and_cl  ./<ext4 partition location>/usr/local/lib/aarch64-linux-gnu/libmali-bifrost-g31-rxp0-gbm.so
+sudo cp libmali.so_rk3326_gbm_arm32_r13p0_with_vulkan_and_cl  ./<ext4 partition location>/usr/local/lib/arm-linux-gnueabihf/libmali-bifrost-g31-rxp0-gbm.so
+```
 ------------------------------------------------------------------------------------------------------------------------------------
 
         Linux kernel release 4.x <http://kernel.org/>
