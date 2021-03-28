@@ -1,3 +1,52 @@
+Build
+=====
+- On Ubuntu desktop
+
+Required packages
+```
+sudo apt-get update &&\
+sudo apt-get install -y git lzop build-essential gcc \
+    bc libncurses5-dev libc6-i386 lib32stdc++6 zlib1g:i386
+```
+Toolchain 6.3.1
+```
+sudo mkdir -p /opt/toolchains &&\
+wget https://releases.linaro.org/components/toolchain/binaries/6.3-2017.05/aarch64-linux-gnu/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz &&\
+sudo tar Jxvf gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz -C /opt/toolchains/
+```
+Add lines below to ~/.bashrc
+```
+export ARCH=arm64
+export CROSS_COMPILE=aarch64-linux-gnu-
+export PATH=/opt/toolchains/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin/:$PATH
+```
+Run the command below to apply the setting.
+```
+source ~/.bashrc
+```
+Verify the toolchain version to confirm compatibility.  It should show `gcc version 6.3.1 20170404 (Linaro GCC 6.3-2017.05)` in the last line output below Thread model.
+```
+aarch64-linux-gnu-gcc -v
+```
+Clone this git and build the kernel
+```
+https://github.com/christianhaitian/linux.git -b odroidgoA-4.4.y
+cd linux
+make odroidgoa_defconfig_tweaked
+make
+```
+Once the kernel build is done, you should have an Image and the following dtb files.  These will go to the /boot partition:
+- arch/arm64/boot/Image
+`ls arch/arm64/boot/Image`
+- arch/arm64/boot/dts/rockchip/rk3326-odroidgo2-linux.dtb
+- arch/arm64/boot/dts/rockchip/rk3326-odroidgo2-linux-v11.dtb
+- arch/arm64/boot/dts/rockchip/rk3326-odroidgo3-linux.dtb
+`ls arch/arm64/boot/dts/rockchip/rk3326-odroidgo*.dtb`
+
+New kernel driver modules will need to be copied to the EXT4 partition:
+`sudo make modules_install ARCH=arm64 INSTALL_MOD_PATH=./<ext4 partition location> && sync`
+------------------------------------------------------------------------------------------------------------------------------------
+
         Linux kernel release 4.x <http://kernel.org/>
 
 These are the release notes for Linux version 4.  Read them carefully,
