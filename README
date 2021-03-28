@@ -34,7 +34,7 @@ Clone this git and build the kernel
 ```
 https://github.com/christianhaitian/linux.git -b odroidgoA-4.4.y
 cd linux
-make odroidgoa_defconfig_tweaked
+make odroidgoa_tweaked_defconfig
 make
 ```
 Once the kernel build is done, you should have an Image and the following dtb files.  These will go to the /boot partition:
