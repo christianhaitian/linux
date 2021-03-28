@@ -8,7 +8,7 @@ Required packages
 ```
 sudo apt-get update &&\
 sudo apt-get install -y git lzop build-essential gcc \
-    bc libncurses5-dev libc6-i386 lib32stdc++6 zlib1g:i386
+    bc libncurses5-dev libc6-i386 lib32stdc++6 zlib1g:i386 p7zip-full p7zip-rar
 ```
 Toolchain 6.3.1
 ```
