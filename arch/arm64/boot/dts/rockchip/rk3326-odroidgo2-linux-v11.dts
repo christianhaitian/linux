@@ -81,10 +81,6 @@
 		/* poll device interval (ms), adc read interval */
 		poll-interval = <10>;
 
-        /* Invert joystick */
-        invert-absx;
-        invert-absy;
-
 		/* gpio button auto repeat set value : default disable */
 		/*
 			autorepeat;
