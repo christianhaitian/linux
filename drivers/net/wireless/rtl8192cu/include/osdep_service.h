@@ -20,6 +20,10 @@
 #ifndef __OSDEP_SERVICE_H_
 #define __OSDEP_SERVICE_H_
 
+#include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+#include <linux/sched/signal.h>
+#endif
 #include <drv_conf.h>
 #include <basic_types.h>
 //#include <rtl871x_byteorder.h>
@@ -849,7 +853,11 @@ __inline static void _set_workitem(_workitem *pwork)
 	typedef int		thread_return;
 	typedef void*	thread_context;
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0)
 	#define thread_exit() complete_and_exit(NULL, 0)
+#else
+	#define kthread_thread_exit() complete_and_exit(NULL, 0)
+#endif
 
 	typedef void timer_hdl_return;
 	typedef void* timer_hdl_context;
@@ -951,6 +959,7 @@ __inline static void rtw_list_delete(_list *plist)
 	list_del_init(plist);
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
 __inline static void _init_timer(_timer *ptimer,_nic_hdl nic_hdl,void *pfunc,void* cntx)
 {
 	//setup_timer(ptimer, pfunc,(u32)cntx);	
@@ -958,6 +967,7 @@ __inline static void _init_timer(_timer *ptimer,_nic_hdl nic_hdl,void *pfunc,voi
 	ptimer->data = (unsigned long)cntx;
 	init_timer(ptimer);
 }
+#endif
 
 __inline static void _set_timer(_timer *ptimer,u32 delay_time)
 {	
@@ -1108,7 +1118,11 @@ static inline void rtw_netif_stop_queue(struct net_device *pnetdev)
 
 	typedef NDIS_WORK_ITEM _workitem;
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0)
 	#define thread_exit() PsTerminateSystemThread(STATUS_SUCCESS);
+#else
+	#define kthread_thread_exit() PsTerminateSystemThread(STATUS_SUCCESS);
+#endif
 
 	#define HZ			10000000
 	#define SEMA_UPBND	(0x7FFFFFFF)   //8192
@@ -1395,8 +1409,8 @@ void _rtw_usb_buffer_free(struct usb_device *dev, size_t size, void *addr, dma_a
 extern void*	rtw_malloc2d(int h, int w, int size);
 extern void	rtw_mfree2d(void *pbuf, int h, int w, int size);
 
-extern void	_rtw_memcpy(void* dec, void* sour, u32 sz);
-extern int	_rtw_memcmp(void *dst, void *src, u32 sz);
+extern void	_rtw_memcpy(void *dec, const void *sour, u32 sz);
+extern int	_rtw_memcmp(const void *dst, const void *src, u32 sz);
 extern void	_rtw_memset(void *pbuf, int c, u32 sz);
 
 extern void	_rtw_init_listhead(_list *list);

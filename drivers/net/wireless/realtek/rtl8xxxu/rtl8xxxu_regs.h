@@ -1,14 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2014 - 2015 Jes Sorensen <Jes.Sorensen@redhat.com>
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * Copyright (c) 2014 - 2017 Jes Sorensen <Jes.Sorensen@gmail.com>
  *
  * Register definitions taken from original Realtek rtl8723au driver
  */
@@ -45,6 +37,7 @@
 #define  APS_FSMCO_ENABLE_POWERDOWN	BIT(4)
 #define  APS_FSMCO_MAC_ENABLE		BIT(8)
 #define  APS_FSMCO_MAC_OFF		BIT(9)
+#define  APS_FSMCO_SW_LPS		BIT(10)
 #define  APS_FSMCO_HW_SUSPEND		BIT(11)
 #define  APS_FSMCO_PCIE			BIT(12)
 #define  APS_FSMCO_HW_POWERDOWN		BIT(15)
@@ -69,9 +62,14 @@
 
 #define REG_EE_VPD			0x000c
 #define REG_AFE_MISC			0x0010
+#define  AFE_MISC_WL_XTAL_CTRL		BIT(6)
+
 #define REG_SPS0_CTRL			0x0011
 #define REG_SPS_OCP_CFG			0x0018
+#define REG_8192E_LDOV12_CTRL		0x0014
 #define REG_RSV_CTRL			0x001c
+#define  RSV_CTRL_WLOCK_1C		BIT(5)
+#define  RSV_CTRL_DIS_PRST		BIT(6)
 
 #define REG_RF_CTRL			0x001f
 #define  RF_ENABLE			BIT(0)
@@ -105,6 +103,9 @@
 #define  AFE_XTAL_GATE_DIG		BIT(17)
 #define  AFE_XTAL_BT_GATE		BIT(20)
 
+/*
+ * 0x0028 is also known as REG_AFE_CTRL2 on 8723bu/8192eu
+ */
 #define REG_AFE_PLL_CTRL		0x0028
 #define  AFE_PLL_ENABLE			BIT(0)
 #define  AFE_PLL_320_ENABLE		BIT(1)
@@ -131,16 +132,28 @@
 #define  EFUSE_ACCESS_DISABLE		0x00	/* RTL8723 only */
 
 #define REG_PWR_DATA			0x0038
+#define  PWR_DATA_EEPRPAD_RFE_CTRL_EN	BIT(11)
+
 #define REG_CAL_TIMER			0x003c
 #define REG_ACLK_MON			0x003e
 #define REG_GPIO_MUXCFG			0x0040
+#define  GPIO_MUXCFG_IO_SEL_ENBT	BIT(5)
 #define REG_GPIO_IO_SEL			0x0042
 #define REG_MAC_PINMUX_CFG		0x0043
 #define REG_GPIO_PIN_CTRL		0x0044
 #define REG_GPIO_INTM			0x0048
+#define  GPIO_INTM_EDGE_TRIG_IRQ	BIT(9)
+
 #define REG_LEDCFG0			0x004c
+#define  LEDCFG0_DPDT_SELECT		BIT(23)
 #define REG_LEDCFG1			0x004d
+#define  LEDCFG1_HW_LED_CONTROL		BIT(1)
+#define  LEDCFG1_LED_DISABLE		BIT(7)
 #define REG_LEDCFG2			0x004e
+#define  LEDCFG2_HW_LED_CONTROL		BIT(1)
+#define  LEDCFG2_HW_LED_ENABLE		BIT(5)
+#define  LEDCFG2_SW_LED_DISABLE		BIT(3)
+#define  LEDCFG2_SW_LED_CONTROL   	BIT(5)
 #define  LEDCFG2_DPDT_SELECT		BIT(7)
 #define REG_LEDCFG3			0x004f
 #define REG_LEDCFG			REG_LEDCFG2
@@ -152,6 +165,12 @@
 #define REG_GPIO_PIN_CTRL_2		0x0060
 /*  RTL8723 WIFI/BT/GPS Multi-Function GPIO Select. */
 #define REG_GPIO_IO_SEL_2		0x0062
+#define  GPIO_IO_SEL_2_GPIO09_INPUT	BIT(1)
+#define  GPIO_IO_SEL_2_GPIO09_IRQ	BIT(9)
+
+/*  RTL8723B */
+#define REG_PAD_CTRL1			0x0064
+#define  PAD_CTRL1_SW_DPDT_SEL_DATA	BIT(0)
 
 /*  RTL8723 only WIFI/BT/GPS Multi-Function control source. */
 #define REG_MULTI_FUNC_CTRL		0x0068
@@ -177,6 +196,9 @@
 						   control */
 #define  MULTI_GPS_FUNC_EN		BIT(22)	/* GPS function enable */
 
+#define REG_AFE_CTRL4			0x0078	/* 8192eu/8723bu */
+#define REG_LDO_SW_CTRL			0x007c	/* 8192eu */
+
 #define REG_MCU_FW_DL			0x0080
 #define  MCU_FW_DL_ENABLE		BIT(0)
 #define  MCU_FW_DL_READY		BIT(1)
@@ -192,6 +214,68 @@
 #define REG_HMBOX_EXT_1			0x008a
 #define REG_HMBOX_EXT_2			0x008c
 #define REG_HMBOX_EXT_3			0x008e
+
+/* Interrupt registers for 8192e/8723bu/8812 */
+#define REG_HIMR0			0x00b0
+#define	 IMR0_TXCCK			BIT(30)	/* TXRPT interrupt when CCX bit
+						   of the packet is set */
+#define	 IMR0_PSTIMEOUT			BIT(29)	/* Power Save Time Out Int */
+#define	 IMR0_GTINT4			BIT(28)	/* Set when GTIMER4 expires */
+#define	 IMR0_GTINT3			BIT(27)	/* Set when GTIMER3 expires */
+#define	 IMR0_TBDER			BIT(26)	/* Transmit Beacon0 Error */
+#define	 IMR0_TBDOK			BIT(25)	/* Transmit Beacon0 OK */
+#define	 IMR0_TSF_BIT32_TOGGLE		BIT(24)	/* TSF Timer BIT32 toggle
+						   indication interrupt */
+#define	 IMR0_BCNDMAINT0		BIT(20)	/* Beacon DMA Interrupt 0 */
+#define	 IMR0_BCNDERR0			BIT(16)	/* Beacon Queue DMA Error 0 */
+#define	 IMR0_HSISR_IND_ON_INT		BIT(15)	/* HSISR Indicator (HSIMR &
+						   HSISR is true) */
+#define	 IMR0_BCNDMAINT_E		BIT(14)	/* Beacon DMA Interrupt
+						   Extension for Win7 */
+#define	 IMR0_ATIMEND			BIT(12)	/* CTWidnow End or
+						   ATIM Window End */
+#define	 IMR0_HISR1_IND_INT		BIT(11)	/* HISR1 Indicator
+						   (HISR1 & HIMR1 is true) */
+#define	 IMR0_C2HCMD			BIT(10)	/* CPU to Host Command INT
+						   Status, Write 1 to clear */
+#define	 IMR0_CPWM2			BIT(9)	/* CPU power Mode exchange INT
+						   Status, Write 1 to clear */
+#define	 IMR0_CPWM			BIT(8)	/* CPU power Mode exchange INT
+						   Status, Write 1 to clear */
+#define	 IMR0_HIGHDOK			BIT(7)	/* High Queue DMA OK */
+#define	 IMR0_MGNTDOK			BIT(6)	/* Management Queue DMA OK */
+#define	 IMR0_BKDOK			BIT(5)	/* AC_BK DMA OK */
+#define	 IMR0_BEDOK			BIT(4)	/* AC_BE DMA OK */
+#define	 IMR0_VIDOK			BIT(3)	/* AC_VI DMA OK */
+#define	 IMR0_VODOK			BIT(2)	/* AC_VO DMA OK */
+#define	 IMR0_RDU			BIT(1)	/* Rx Descriptor Unavailable */
+#define	 IMR0_ROK			BIT(0)	/* Receive DMA OK */
+#define REG_HISR0			0x00b4
+#define REG_HIMR1			0x00b8
+#define	 IMR1_BCNDMAINT7		BIT(27)	/* Beacon DMA Interrupt 7 */
+#define	 IMR1_BCNDMAINT6		BIT(26)	/* Beacon DMA Interrupt 6 */
+#define	 IMR1_BCNDMAINT5		BIT(25)	/* Beacon DMA Interrupt 5 */
+#define	 IMR1_BCNDMAINT4		BIT(24)	/* Beacon DMA Interrupt 4 */
+#define	 IMR1_BCNDMAINT3		BIT(23)	/* Beacon DMA Interrupt 3 */
+#define	 IMR1_BCNDMAINT2		BIT(22)	/* Beacon DMA Interrupt 2 */
+#define	 IMR1_BCNDMAINT1		BIT(21)	/* Beacon DMA Interrupt 1 */
+#define	 IMR1_BCNDERR7			BIT(20)	/* Beacon Queue DMA Err Int 7 */
+#define	 IMR1_BCNDERR6			BIT(19)	/* Beacon Queue DMA Err Int 6 */
+#define	 IMR1_BCNDERR5			BIT(18)	/* Beacon Queue DMA Err Int 5 */
+#define	 IMR1_BCNDERR4			BIT(17)	/* Beacon Queue DMA Err Int 4 */
+#define	 IMR1_BCNDERR3			BIT(16)	/* Beacon Queue DMA Err Int 3 */
+#define	 IMR1_BCNDERR2			BIT(15)	/* Beacon Queue DMA Err Int 2 */
+#define	 IMR1_BCNDERR1			BIT(14)	/* Beacon Queue DMA Err Int 1 */
+#define	 IMR1_ATIMEND_E			BIT(13)	/* ATIM Window End Extension
+						   for Win7 */
+#define	 IMR1_TXERR			BIT(11)	/* Tx Error Flag Int Status,
+						   write 1 to clear */
+#define	 IMR1_RXERR			BIT(10)	/* Rx Error Flag Int Status,
+						   write 1 to clear */
+#define	 IMR1_TXFOVW			BIT(9)	/* Transmit FIFO Overflow */
+#define	 IMR1_RXFOVW			BIT(8)	/* Receive FIFO Overflow */
+#define REG_HISR1			0x00bc
+
 /*  Host suspend counter on FPGA platform */
 #define REG_HOST_SUSP_CNT		0x00bc
 /*  Efuse access protection for RTL8723 */
@@ -213,6 +297,7 @@
 #define  SYS_CFG_PCIRSTB		BIT(4)
 #define  SYS_CFG_V15_VLD		BIT(5)
 #define  SYS_CFG_TRP_B15V_EN		BIT(7)
+#define  SYS_CFG_SW_OFFLOAD_EN		BIT(7)	/* For chips with IOL support */
 #define  SYS_CFG_SIC_IDLE		BIT(8)
 #define  SYS_CFG_BD_MAC2		BIT(9)
 #define  SYS_CFG_BD_MAC1		BIT(10)
@@ -220,9 +305,14 @@
 #define  SYS_CFG_CHIP_VER		(BIT(12) | BIT(13) | BIT(14) | BIT(15))
 #define  SYS_CFG_BT_FUNC		BIT(16)
 #define  SYS_CFG_VENDOR_ID		BIT(19)
+#define  SYS_CFG_VENDOR_EXT_MASK	(BIT(18) | BIT(19))
+#define   SYS_CFG_VENDOR_ID_TSMC	0
+#define   SYS_CFG_VENDOR_ID_SMIC	BIT(18)
+#define   SYS_CFG_VENDOR_ID_UMC		BIT(19)
 #define  SYS_CFG_PAD_HWPD_IDN		BIT(22)
 #define  SYS_CFG_TRP_VAUX_EN		BIT(23)
 #define  SYS_CFG_TRP_BT_EN		BIT(24)
+#define  SYS_CFG_SPS_LDO_SEL		BIT(24)	/* 8192eu */
 #define  SYS_CFG_BD_PKG_SEL		BIT(25)
 #define  SYS_CFG_BD_HCI_SEL		BIT(26)
 #define  SYS_CFG_TYPE_ID		BIT(27)
@@ -231,7 +321,6 @@
 #define  SYS_CFG_SPS_SEL		BIT(24) /*  1:LDO regulator mode;
 						    0:Switching regulator mode*/
 #define  SYS_CFG_CHIP_VERSION_MASK	0xf000	/* Bit 12 - 15 */
-#define  SYS_CFG_CHIP_VERSION_SHIFT	12
 
 #define REG_GPIO_OUTSTS			0x00f4	/*  For RTL8723 only. */
 #define  GPIO_EFS_HCI_SEL		(BIT(0) | BIT(1))
@@ -254,6 +343,8 @@
 #define  GPIO_PCI_SUSEN			BIT(22)
 #define  GPIO_USB_SUSEN			BIT(23)
 #define  GPIO_RF_RL_ID			(BIT(31) | BIT(30) | BIT(29) | BIT(28))
+
+#define REG_SYS_CFG2			0x00fc	/* 8192eu */
 
 /* 0x0100 ~ 0x01FF	MACTOP General Configuration */
 #define REG_CR				0x0100
@@ -286,7 +377,13 @@
 #define  PBP_PAGE_SIZE_512		0x3
 #define  PBP_PAGE_SIZE_1024		0x4
 
+/* 8188eu IOL magic */
+#define REG_PKT_BUF_ACCESS_CTRL		0x0106
+#define  PKT_BUF_ACCESS_CTRL_TX		0x69
+#define  PKT_BUF_ACCESS_CTRL_RX		0xa5
+
 #define REG_TRXDMA_CTRL			0x010c
+#define  TRXDMA_CTRL_RXDMA_AGG_EN	BIT(2)
 #define  TRXDMA_CTRL_VOQ_SHIFT		4
 #define  TRXDMA_CTRL_VIQ_SHIFT		6
 #define  TRXDMA_CTRL_BEQ_SHIFT		8
@@ -307,6 +404,7 @@
 #define REG_CPWM			0x012f
 #define REG_FWIMR			0x0130
 #define REG_FWISR			0x0134
+#define REG_FTIMR			0x0138
 #define REG_PKTBUF_DBG_CTRL		0x0140
 #define REG_PKTBUF_DBG_DATA_L		0x0144
 #define REG_PKTBUF_DBG_DATA_H		0x0148
@@ -320,7 +418,11 @@
 #define REG_MBIST_START			0x0174
 #define REG_MBIST_DONE			0x0178
 #define REG_MBIST_FAIL			0x017c
+/* 8188EU */
+#define REG_32K_CTRL			0x0194
 #define REG_C2HEVT_MSG_NORMAL		0x01a0
+/* 8192EU/8723BU/8812 */
+#define REG_C2HEVT_CMD_ID_8723B		0x01ae
 #define REG_C2HEVT_CLEAR		0x01af
 #define REG_C2HEVT_MSG_TEST		0x01b8
 #define REG_MCUTST_1			0x01c0
@@ -340,41 +442,83 @@
 #define REG_BB_ACCEESS_CTRL		0x01e8
 #define REG_BB_ACCESS_DATA		0x01ec
 
+#define REG_HMBOX_EXT0_8723B		0x01f0
+#define REG_HMBOX_EXT1_8723B		0x01f4
+#define REG_HMBOX_EXT2_8723B		0x01f8
+#define REG_HMBOX_EXT3_8723B		0x01fc
+
 /* 0x0200 ~ 0x027F	TXDMA Configuration */
 #define REG_RQPN			0x0200
 #define  RQPN_HI_PQ_SHIFT		0
 #define  RQPN_LO_PQ_SHIFT		8
-#define  RQPN_NORM_PQ_SHIFT		16
+#define  RQPN_PUB_PQ_SHIFT		16
 #define  RQPN_LOAD			BIT(31)
 
 #define REG_FIFOPAGE			0x0204
 #define REG_TDECTRL			0x0208
+#define  BIT_BCN_VALID			BIT(16)
+
+#define REG_DWBCN0_CTRL_8188F		REG_TDECTRL
+
 #define REG_TXDMA_OFFSET_CHK		0x020c
+#define  TXDMA_OFFSET_DROP_DATA_EN	BIT(9)
 #define REG_TXDMA_STATUS		0x0210
 #define REG_RQPN_NPQ			0x0214
+#define  RQPN_NPQ_SHIFT			0
+#define  RQPN_EPQ_SHIFT			16
+
+#define REG_AUTO_LLT			0x0224
+#define  AUTO_LLT_INIT_LLT		BIT(16)
+
+#define REG_DWBCN1_CTRL_8723B		0x0228
+#define  BIT_SW_BCN_SEL			BIT(20)
 
 /* 0x0280 ~ 0x02FF	RXDMA Configuration */
-#define REG_RXDMA_AGG_PG_TH		0x0280
+#define REG_RXDMA_AGG_PG_TH		0x0280	/* 0-7 : USB DMA size bits
+						   8-14: USB DMA timeout
+						   15  : Aggregation enable
+						         Only seems to be used
+							 on 8723bu/8192eu */
+#define  RXDMA_USB_AGG_ENABLE		BIT(31)
 #define REG_RXPKT_NUM			0x0284
+#define  RXPKT_NUM_RXDMA_IDLE		BIT(17)
+#define  RXPKT_NUM_RW_RELEASE_EN	BIT(18)
 #define REG_RXDMA_STATUS		0x0288
+
+/* Presumably only found on newer chips such as 8723bu */
+#define REG_RX_DMA_CTRL_8723B		0x0286
+#define REG_RXDMA_PRO_8723B		0x0290
+#define  RXDMA_PRO_DMA_MODE		BIT(1)		/* Set to 0x1. */
+#define  RXDMA_PRO_DMA_BURST_CNT	GENMASK(3, 2)	/* Set to 0x3. */
+#define  RXDMA_PRO_DMA_BURST_SIZE	GENMASK(5, 4)	/* Set to 0x1. */
+
+#define REG_EARLY_MODE_CONTROL_8710B	0x02bc
 
 #define REG_RF_BB_CMD_ADDR		0x02c0
 #define REG_RF_BB_CMD_DATA		0x02c4
 
 /*  spec version 11 */
 /* 0x0400 ~ 0x047F	Protocol Configuration */
-#define REG_VOQ_INFORMATION		0x0400
-#define REG_VIQ_INFORMATION		0x0404
-#define REG_BEQ_INFORMATION		0x0408
-#define REG_BKQ_INFORMATION		0x040c
-#define REG_MGQ_INFORMATION		0x0410
-#define REG_HGQ_INFORMATION		0x0414
-#define REG_BCNQ_INFORMATION		0x0418
+/* 8192c, 8192d */
+#define REG_VOQ_INFO			0x0400
+#define REG_VIQ_INFO			0x0404
+#define REG_BEQ_INFO			0x0408
+#define REG_BKQ_INFO			0x040c
+/* 8188e, 8723a, 8812a, 8821a, 8192e, 8723b */
+#define REG_Q0_INFO			0x400
+#define REG_Q1_INFO			0x404
+#define REG_Q2_INFO			0x408
+#define REG_Q3_INFO			0x40c
+
+#define REG_MGQ_INFO			0x0410
+#define REG_HGQ_INFO			0x0414
+#define REG_BCNQ_INFO			0x0418
 
 #define REG_CPU_MGQ_INFORMATION		0x041c
 #define REG_FWHW_TXQ_CTRL		0x0420
 #define  FWHW_TXQ_CTRL_AMPDU_RETRY	BIT(7)
 #define  FWHW_TXQ_CTRL_XMIT_MGMT_ACK	BIT(12)
+#define  EN_BCNQ_DL			BIT(22)
 
 #define REG_HWSEQ_CTRL			0x0423
 #define REG_TXPKTBUF_BCNQ_BDNY		0x0424
@@ -399,6 +543,8 @@
 #define REG_RESPONSE_RATE_SET		0x0440
 #define  RESPONSE_RATE_BITMAP_ALL	0xfffff
 #define  RESPONSE_RATE_RRSR_CCK_ONLY_1M	0xffff1
+#define  RESPONSE_RATE_RRSR_INIT_2G	0x15f
+#define  RESPONSE_RATE_RRSR_INIT_5G	0x150
 #define  RSR_1M				BIT(0)
 #define  RSR_2M				BIT(1)
 #define  RSR_5_5M			BIT(2)
@@ -429,30 +575,54 @@
 #define REG_ARFR1			0x0448
 #define REG_ARFR2			0x044c
 #define REG_ARFR3			0x0450
+#define REG_CCK_CHECK			0x0454
+#define BIT_BCN_PORT_SEL		BIT(5)
+#define REG_AMPDU_MAX_TIME_8723B	0x0456
 #define REG_AGGLEN_LMT			0x0458
 #define REG_AMPDU_MIN_SPACE		0x045c
 #define REG_TXPKTBUF_WMAC_LBK_BF_HD	0x045d
 #define REG_FAST_EDCA_CTRL		0x0460
 #define REG_RD_RESP_PKT_TH		0x0463
 #define REG_INIRTS_RATE_SEL		0x0480
+/* 8723bu */
+#define REG_DATA_SUBCHANNEL		0x0483
+/* 8723au */
 #define REG_INIDATA_RATE_SEL		0x0484
+/* MACID_SLEEP_1/3 for 8723b, 8192e, 8812a, 8821a */
+#define REG_MACID_SLEEP_3_8732B		0x0484
+#define REG_MACID_SLEEP_1_8732B		0x0488
 
 #define REG_POWER_STATUS		0x04a4
 #define REG_POWER_STAGE1		0x04b4
 #define REG_POWER_STAGE2		0x04b8
+#define REG_AMPDU_BURST_MODE_8723B	0x04bc
 #define REG_PKT_VO_VI_LIFE_TIME		0x04c0
 #define REG_PKT_BE_BK_LIFE_TIME		0x04c2
 #define REG_STBC_SETTING		0x04c4
+#define REG_QUEUE_CTRL			0x04c6
+#define REG_HT_SINGLE_AMPDU_8723B	0x04c7
+#define  HT_SINGLE_AMPDU_ENABLE		BIT(7)
 #define REG_PROT_MODE_CTRL		0x04c8
 #define REG_MAX_AGGR_NUM		0x04ca
 #define REG_RTS_MAX_AGGR_NUM		0x04cb
 #define REG_BAR_MODE_CTRL		0x04cc
 #define REG_RA_TRY_RATE_AGG_LMT		0x04cf
+/* MACID_DROP for 8723a */
+#define REG_MACID_DROP_8732A		0x04d0
+/* EARLY_MODE_CONTROL 8188e */
+#define REG_EARLY_MODE_CONTROL_8188E	0x04d0
+/* MACID_SLEEP_2 for 8723b, 8192e, 8812a, 8821a */
+#define REG_MACID_SLEEP_2_8732B		0x04d0
+#define REG_MACID_SLEEP			0x04d4
 #define REG_NQOS_SEQ			0x04dc
 #define REG_QOS_SEQ			0x04de
 #define REG_NEED_CPU_HANDLE		0x04e0
 #define REG_PKT_LOSE_RPT		0x04e1
 #define REG_PTCL_ERR_STATUS		0x04e2
+#define REG_TX_REPORT_CTRL		0x04ec
+#define  TX_REPORT_CTRL_TIMER_ENABLE	BIT(1)
+
+#define REG_TX_REPORT_TIME		0x04f0
 #define REG_DUMMY			0x04fc
 
 /* 0x0500 ~ 0x05FF	EDCA Configuration */
@@ -505,6 +675,7 @@
 #define  BEACON_DMA_ATIME_INT_TIME	2
 
 #define REG_ATIMWND			0x055a
+#define REG_USTIME_TSF_8723B		0x055c
 #define REG_BCN_MAX_ERR			0x055d
 #define REG_RXTSF_OFFSET_CCK		0x055e
 #define REG_RXTSF_OFFSET_OFDM		0x055f
@@ -529,6 +700,7 @@
 #define REG_SCH_TXCMD			0x05d0
 
 /* define REG_FW_TSF_SYNC_CNT		0x04a0 */
+#define REG_SCH_TX_CMD			0x05f8
 #define REG_FW_RESET_TSF_CNT_1		0x05fc
 #define REG_FW_RESET_TSF_CNT_0		0x05fd
 #define REG_FW_BCN_DIS_CNT		0x05fe
@@ -559,13 +731,25 @@
 						 (Rx beacon, probe rsp) */
 #define  RCR_ACCEPT_CRC32		BIT(8)  /* Accept CRC32 error packet */
 #define  RCR_ACCEPT_ICV			BIT(9)  /* Accept ICV error packet */
-#define  RCR_ACCEPT_DATA_FRAME		BIT(11)
-#define  RCR_ACCEPT_CTRL_FRAME		BIT(12)
-#define  RCR_ACCEPT_MGMT_FRAME		BIT(13)
+#define  RCR_ACCEPT_DATA_FRAME		BIT(11) /* Accept all data pkt or use
+						   REG_RXFLTMAP2 */
+#define  RCR_ACCEPT_CTRL_FRAME		BIT(12) /* Accept all control pkt or use
+						   REG_RXFLTMAP1 */
+#define  RCR_ACCEPT_MGMT_FRAME		BIT(13) /* Accept all mgmt pkt or use
+						   REG_RXFLTMAP0 */
 #define  RCR_HTC_LOC_CTRL		BIT(14) /* MFC<--HTC=1 MFC-->HTC=0 */
+#define  RCR_UC_DATA_PKT_INT_ENABLE	BIT(16) /* Enable unicast data packet
+						   interrupt */
+#define  RCR_BM_DATA_PKT_INT_ENABLE	BIT(17) /* Enable broadcast data packet
+						   interrupt */
+#define  RCR_TIM_PARSER_ENABLE		BIT(18) /* Enable RX beacon TIM parser*/
 #define  RCR_MFBEN			BIT(22)
-#define  RCR_LSIGEN			BIT(23)
+#define  RCR_LSIG_ENABLE		BIT(23) /* Enable LSIG TXOP Protection
+						   function. Search KEYCAM for
+						   each rx packet to check if
+						   LSIGEN bit is set. */
 #define  RCR_MULTI_BSSID_ENABLE		BIT(24) /* Enable Multiple BssId */
+#define  RCR_FORCE_ACK			BIT(26)
 #define  RCR_ACCEPT_BA_SSN		BIT(27) /* Accept BA SSN */
 #define  RCR_APPEND_PHYSTAT		BIT(28)
 #define  RCR_APPEND_ICV			BIT(29)
@@ -605,6 +789,10 @@
 #define REG_FWDLY			0x0661
 #define REG_RXERR_RPT			0x0664
 #define REG_WMAC_TRXPTCL_CTL		0x0668
+#define  WMAC_TRXPTCL_CTL_BW_MASK	(BIT(7) | BIT(8))
+#define  WMAC_TRXPTCL_CTL_BW_20		0
+#define  WMAC_TRXPTCL_CTL_BW_40		BIT(7)
+#define  WMAC_TRXPTCL_CTL_BW_80		BIT(8)
 
 /*  Security */
 #define REG_CAM_CMD			0x0670
@@ -632,17 +820,40 @@
 #define REG_LPNAV_CTRL			0x0694
 #define REG_WKFMCAM_CMD			0x0698
 #define REG_WKFMCAM_RWD			0x069c
-#define REG_RXFLTMAP0			0x06a0
-#define REG_RXFLTMAP1			0x06a2
-#define REG_RXFLTMAP2			0x06a4
+
+/*
+ * RX Filters: each bit corresponds to the numerical value of the subtype.
+ * If it is set the subtype frame type is passed. The filter is only used when
+ * the RCR_ACCEPT_DATA_FRAME, RCR_ACCEPT_CTRL_FRAME, RCR_ACCEPT_MGMT_FRAME bit
+ * in the RCR are low.
+ *
+ * Example: Beacon subtype is binary 1000 which is decimal 8 so we have to set
+ * bit 8 (0x100) in REG_RXFLTMAP0 to enable reception.
+ */
+#define REG_RXFLTMAP0			0x06a0	/* Management frames */
+#define REG_RXFLTMAP1			0x06a2	/* Control frames */
+#define REG_RXFLTMAP2			0x06a4	/* Data frames */
+
 #define REG_BCN_PSR_RPT			0x06a8
 #define REG_CALB32K_CTRL		0x06ac
 #define REG_PKT_MON_CTRL		0x06b4
-#define REG_BT_COEX_TABLE		0x06c0
+#define REG_BT_COEX_TABLE1		0x06c0
+#define REG_BT_COEX_TABLE2		0x06c4
+#define REG_BT_COEX_TABLE3		0x06c8
+#define REG_BT_COEX_TABLE4		0x06cc
 #define REG_WMAC_RESP_TXINFO		0x06d8
 
 #define REG_MACID1			0x0700
 #define REG_BSSID1			0x0708
+
+/*
+ * This seems to be 8723bu specific
+ */
+#define REG_BT_CONTROL_8723BU		0x0764
+#define  BT_CONTROL_BT_GRANT		BIT(12)
+
+#define REG_PORT_CONTROL_8710B		0x076d
+#define REG_WLAN_ACT_CONTROL_8723B	0x076e
 
 #define REG_FPGA0_RF_MODE		0x0800
 #define  FPGA_RF_MODE			BIT(0)
@@ -651,6 +862,10 @@
 #define  FPGA_RF_MODE_OFDM		BIT(25)
 
 #define REG_FPGA0_TX_INFO		0x0804
+#define  FPGA0_TX_INFO_OFDM_PATH_A	BIT(0)
+#define  FPGA0_TX_INFO_OFDM_PATH_B	BIT(1)
+#define  FPGA0_TX_INFO_OFDM_PATH_C	BIT(2)
+#define  FPGA0_TX_INFO_OFDM_PATH_D	BIT(3)
 #define REG_FPGA0_PSD_FUNC		0x0808
 #define REG_FPGA0_TX_GAIN		0x080c
 #define REG_FPGA0_RF_TIMING1		0x0810
@@ -734,19 +949,75 @@
 #define REG_FPGA0_ANALOG3		0x0888
 #define REG_FPGA0_ANALOG4		0x088c
 
+#define REG_NHM_TH9_TH10_8723B		0x0890
+#define REG_NHM_TIMER_8723B		0x0894
+#define REG_NHM_TH3_TO_TH0_8723B	0x0898
+#define REG_NHM_TH7_TO_TH4_8723B	0x089c
+
 #define REG_FPGA0_XA_LSSI_READBACK	0x08a0	/* Tranceiver LSSI Readback */
 #define REG_FPGA0_XB_LSSI_READBACK	0x08a4
+#define REG_FPGA0_PSD_REPORT		0x08b4
 #define REG_HSPI_XA_READBACK		0x08b8	/* Transceiver A HSPI read */
 #define REG_HSPI_XB_READBACK		0x08bc	/* Transceiver B HSPI read */
 
 #define REG_FPGA1_RF_MODE		0x0900
 
 #define REG_FPGA1_TX_INFO		0x090c
+#define  FPGA1_TX_ANT_MASK		0x0000000f
+#define  FPGA1_TX_ANT_L_MASK		0x000000f0
+#define  FPGA1_TX_ANT_NON_HT_MASK	0x00000f00
+#define  FPGA1_TX_ANT_HT1_MASK		0x0000f000
+#define  FPGA1_TX_ANT_HT2_MASK		0x000f0000
+#define  FPGA1_TX_ANT_HT_S1_MASK	0x00f00000
+#define  FPGA1_TX_ANT_NON_HT_S1_MASK	0x0f000000
+#define  FPGA1_TX_OFDM_TXSC_MASK	0x30000000
+
+#define REG_ANT_MAPPING1		0x0914
+#define REG_DPDT_CTRL			0x092c	/* 8723BU */
+#define REG_RFE_CTRL_ANTA_SRC		0x0930	/* 8723BU */
+#define REG_RFE_PATH_SELECT		0x0940	/* 8723BU */
+#define REG_RFE_BUFFER			0x0944	/* 8723BU */
+#define REG_S0S1_PATH_SWITCH		0x0948	/* 8723BU */
+#define REG_OFDM_RX_DFIR		0x954
 
 #define REG_CCK0_SYSTEM			0x0a00
 #define  CCK0_SIDEBAND			BIT(4)
 
 #define REG_CCK0_AFE_SETTING		0x0a04
+#define  CCK0_AFE_RX_MASK		0x0f000000
+#define  CCK0_AFE_TX_MASK		0xf0000000
+#define  CCK0_AFE_RX_ANT_A		0
+#define  CCK0_AFE_RX_ANT_B		BIT(26)
+#define  CCK0_AFE_RX_ANT_C		BIT(27)
+#define  CCK0_AFE_RX_ANT_D		(BIT(26) | BIT(27))
+#define  CCK0_AFE_RX_ANT_OPTION_A	0
+#define  CCK0_AFE_RX_ANT_OPTION_B	BIT(24)
+#define  CCK0_AFE_RX_ANT_OPTION_C	BIT(25)
+#define  CCK0_AFE_RX_ANT_OPTION_D	(BIT(24) | BIT(25))
+#define  CCK0_AFE_TX_ANT_A		BIT(31)
+#define  CCK0_AFE_TX_ANT_B		BIT(30)
+
+#define REG_CCK_ANTDIV_PARA2		0x0a04
+#define REG_BB_POWER_SAVE4		0x0a74
+
+/* 8188eu */
+#define REG_LNA_SWITCH			0x0b2c
+#define  LNA_SWITCH_DISABLE_CSCG	BIT(22)
+#define  LNA_SWITCH_OUTPUT_CG		BIT(31)
+
+#define REG_CCK_PD_THRESH			0x0a0a
+#define  CCK_PD_TYPE1_LV0_TH		0x40
+#define  CCK_PD_TYPE1_LV1_TH		0x83
+#define  CCK_PD_TYPE1_LV2_TH		0xcd
+#define  CCK_PD_TYPE1_LV3_TH		0xdd
+#define  CCK_PD_TYPE1_LV4_TH		0xed
+
+#define REG_CCK0_TX_FILTER1		0x0a20
+#define REG_CCK0_TX_FILTER2		0x0a24
+#define REG_CCK0_DEBUG_PORT		0x0a28	/* debug port and Tx filter3 */
+#define REG_AGC_RPT			0xa80
+#define  AGC_RPT_CCK			BIT(7)
+#define REG_CCK0_TX_FILTER3		0x0aac
 
 #define REG_CONFIG_ANT_A		0x0b68
 #define REG_CONFIG_ANT_B		0x0b6c
@@ -765,10 +1036,16 @@
 
 #define REG_OFDM0_TR_MUX_PAR		0x0c08
 
+#define REG_OFDM0_FA_RSTC		0x0c0c
+
+#define REG_OFDM0_XA_RX_AFE		0x0c10
 #define REG_OFDM0_XA_RX_IQ_IMBALANCE	0x0c14
 #define REG_OFDM0_XB_RX_IQ_IMBALANCE	0x0c1c
 
 #define REG_OFDM0_ENERGY_CCA_THRES	0x0c4c
+
+#define REG_OFDM0_RX_D_SYNC_PATH	0x0c40
+#define  OFDM0_SYNC_PATH_NOTCH_FILTER	BIT(1)
 
 #define REG_OFDM0_XA_AGC_CORE1		0x0c50
 #define REG_OFDM0_XA_AGC_CORE2		0x0c54
@@ -794,6 +1071,12 @@
 
 #define REG_OFDM0_RX_IQ_EXT_ANTA	0x0ca0
 
+/* 8188eu */
+#define REG_ANTDIV_PARA1		0x0ca4
+
+/* 8723bu */
+#define REG_OFDM0_TX_PSDO_NOISE_WEIGHT	0x0ce4
+
 #define REG_OFDM1_LSTF			0x0d00
 #define  OFDM_LSTF_PRIME_CH_LOW		BIT(10)
 #define  OFDM_LSTF_PRIME_CH_HIGH	BIT(11)
@@ -805,6 +1088,10 @@
 #define  OFDM_LSTF_MASK			0x70000000
 
 #define REG_OFDM1_TRX_PATH_ENABLE	0x0d04
+#define REG_OFDM1_CFO_TRACKING		0x0d2c
+#define  CFO_TRACKING_ATC_STATUS	BIT(11)
+#define REG_OFDM1_CSI_FIX_MASK1		0x0d40
+#define REG_OFDM1_CSI_FIX_MASK2		0x0d44
 
 #define REG_TX_AGC_A_RATE18_06		0x0e00
 #define REG_TX_AGC_A_RATE54_24		0x0e04
@@ -904,10 +1191,17 @@
 						    Unavailable */
 #define  USB_HIMR_ROK			BIT(0)	/*  Receive DMA OK Interrupt */
 
+#define REG_USB_ACCESS_TIMEOUT		0xfe4c
+
 #define REG_USB_SPECIAL_OPTION		0xfe55
+#define  USB_SPEC_USB_AGG_ENABLE	BIT(3)	/* Enable USB aggregation */
+#define  USB_SPEC_INT_BULK_SELECT	BIT(4)	/* Use interrupt endpoint to
+						   deliver interrupt packet.
+						   0: Use int, 1: use bulk */
+#define REG_USB_HRPWM			0xfe58
 #define REG_USB_DMA_AGG_TO		0xfe5b
-#define REG_USB_AGG_TO			0xfe5c
-#define REG_USB_AGG_TH			0xfe5d
+#define REG_USB_AGG_TIMEOUT		0xfe5c
+#define REG_USB_AGG_THRESH		0xfe5d
 
 #define REG_NORMAL_SIE_VID		0xfe60	/* 0xfe60 - 0xfe61 */
 #define REG_NORMAL_SIE_PID		0xfe62	/* 0xfe62 - 0xfe63 */
@@ -923,6 +1217,41 @@
 #define REG_NORMAL_SIE_GPS_EP		0xfe6d	/* RTL8723 only */
 #define REG_NORMAL_SIE_MAC_ADDR		0xfe70	/* 0xfe70 - 0xfe75 */
 #define REG_NORMAL_SIE_STRING		0xfe80	/* 0xfe80 - 0xfedf */
+
+/*
+ * 8710B register addresses between 0x00 and 0xff must have 0x8000
+ * added to them. We take care of that in the rtl8xxxu_read{8,16,32}
+ * and rtl8xxxu_write{8,16,32} functions.
+ */
+#define REG_SYS_FUNC_8710B		0x0004
+#define REG_AFE_CTRL_8710B		0x0050
+#define REG_WL_RF_PSS_8710B		0x005c
+#define REG_EFUSE_INDIRECT_CTRL_8710B	0x006c
+#define  NORMAL_REG_READ_OFFSET		0x83000000
+#define  NORMAL_REG_WRITE_OFFSET	0x84000000
+#define  EFUSE_READ_OFFSET		0x85000000
+#define  EFUSE_WRITE_OFFSET		0x86000000
+#define REG_HIMR0_8710B			0x0080
+#define REG_HISR0_8710B			0x0084
+/*
+ * 8710B uses this instead of REG_MCU_FW_DL, but at least bits
+ * 0-7 have the same meaning.
+ */
+#define REG_8051FW_CTRL_V1_8710B	0x0090
+#define REG_USB_HOST_INDIRECT_DATA_8710B	0x009c
+#define REG_WL_STATUS_8710B		0x00f0
+#define REG_USB_HOST_INDIRECT_ADDR_8710B	0x00f8
+
+/*
+ * 8710B registers which must be accessed through rtl8710b_read_syson_reg
+ * and rtl8710b_write_syson_reg.
+ */
+#define SYSON_REG_BASE_ADDR_8710B	0x40000000
+#define REG_SYS_XTAL_CTRL0_8710B	0x060
+#define REG_SYS_EEPROM_CTRL0_8710B	0x0e0
+#define REG_SYS_SYSTEM_CFG0_8710B	0x1f0
+#define REG_SYS_SYSTEM_CFG1_8710B	0x1f4
+#define REG_SYS_SYSTEM_CFG2_8710B	0x1f8
 
 /* RF6052 registers */
 #define RF6052_REG_AC			0x00
@@ -952,6 +1281,10 @@
 #define RF6052_REG_MODE_AG		0x18	/* RF channel and BW switch */
 #define  MODE_AG_CHANNEL_MASK		0x3ff
 #define  MODE_AG_CHANNEL_20MHZ		BIT(10)
+#define  MODE_AG_BW_MASK		(BIT(10) | BIT(11))
+#define  MODE_AG_BW_20MHZ_8723B		(BIT(10) | BIT(11))
+#define  MODE_AG_BW_40MHZ_8723B		BIT(10)
+#define  MODE_AG_BW_80MHZ_8723B		0
 
 #define RF6052_REG_TOP			0x19
 #define RF6052_REG_RX_G1		0x1a
@@ -979,3 +1312,16 @@
 #define RF6052_REG_TXPA_G1		0x31	/* RF TX PA control */
 #define RF6052_REG_TXPA_G2		0x32	/* RF TX PA control */
 #define RF6052_REG_TXPA_G3		0x33	/* RF TX PA control */
+
+/*
+ * NextGen regs: 8723BU
+ */
+#define RF6052_REG_T_METER_8723B	0x42
+#define RF6052_REG_UNKNOWN_43		0x43
+#define RF6052_REG_UNKNOWN_55		0x55
+#define RF6052_REG_UNKNOWN_56		0x56
+#define RF6052_REG_RXG_MIX_SWBW		0x87
+#define RF6052_REG_S0S1			0xb0
+#define RF6052_REG_UNKNOWN_DF		0xdf
+#define RF6052_REG_UNKNOWN_ED		0xed
+#define RF6052_REG_WE_LUT		0xef
