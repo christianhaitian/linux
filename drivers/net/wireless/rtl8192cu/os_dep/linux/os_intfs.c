@@ -52,6 +52,21 @@ MODULE_DESCRIPTION("Realtek Wireless Lan Driver");
 MODULE_AUTHOR("Realtek Semiconductor Corp.");
 MODULE_VERSION(DRIVERVERSION);
 
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,0))
+#define RT_MOD_INC_USE_COUNT() \
+	if (!try_module_get(THIS_MODULE)) \
+	{ \
+		DBG_871X("%s: cannot reserve module\n", __FUNCTION__); \
+		return -1; \
+	}
+
+#define RT_MOD_DEC_USE_COUNT() module_put(THIS_MODULE);
+#else
+#define RT_MOD_INC_USE_COUNT()	MOD_INC_USE_COUNT;
+#define RT_MOD_DEC_USE_COUNT() MOD_DEC_USE_COUNT;
+#endif
+
 /* module param defaults */
 int rtw_chip_version = 0x00;
 int rtw_rfintfs = HWPI;
@@ -267,6 +282,7 @@ int _netdev_open(struct net_device *pnetdev);
 int netdev_open (struct net_device *pnetdev);
 static int netdev_close (struct net_device *pnetdev);
 
+
 //#ifdef RTK_DMP_PLATFORM
 #ifdef CONFIG_PROC_DEBUG
 #define RTL8192C_PROC_NAME "rtl819xC"
@@ -277,9 +293,22 @@ static int	rtw_proc_cnt = 0;
 
 #define RTW_PROC_NAME DRV_NAME
 
+/* kernel 3.10+ fix */
+#ifndef create_proc_entry
+/* dummy routines */
+void rtw_proc_remove_one(struct net_device *dev)
+{
+}
+
 void rtw_proc_init_one(struct net_device *dev)
 {
-#if(LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0))
+}
+
+#else /* create_proc_entry not defined */
+/* kernel 3.10+ fix */
+
+void rtw_proc_init_one(struct net_device *dev)
+{
 	struct proc_dir_entry *dir_dev = NULL;
 	struct proc_dir_entry *entry=NULL;
 	_adapter	*padapter = rtw_netdev_priv(dev);
@@ -331,7 +360,7 @@ void rtw_proc_init_one(struct net_device *dev)
 			return;
 		}
 		entry->write_proc = proc_set_log_level;
-
+		
 #ifdef DBG_MEM_ALLOC
 		entry = create_proc_read_entry("mstat", S_IFREG | S_IRUGO,
 				   rtw_proc, proc_get_mstat, dev);
@@ -648,9 +677,6 @@ void rtw_proc_init_one(struct net_device *dev)
 	entry->write_proc = proc_set_dm_adaptivity;
 #endif /* CONFIG_DM_ADAPTIVITY */
 
-#else /* kernel version < 3.10 */
-		DBG_871X(KERN_ERR "Unable to create /proc entry in this kernel version\n");
-#endif
 }
 
 void rtw_proc_remove_one(struct net_device *dev)
@@ -756,6 +782,9 @@ void rtw_proc_remove_one(struct net_device *dev)
 	}
 }
 #endif
+/* kernel 3.10+ fix */
+#endif
+/* kernel 3.10+ fix */
 
 uint loadparam( _adapter *padapter,  _nic_hdl	pnetdev);
 uint loadparam( _adapter *padapter,  _nic_hdl	pnetdev)
@@ -951,15 +980,15 @@ unsigned int rtw_classify8021d(struct sk_buff *skb)
 
 #if (LINUX_VERSION_CODE>=KERNEL_VERSION(5,2,0))
 static u16 rtw_select_queue(struct net_device *dev, struct sk_buff *skb,
-			    struct net_device *sb_dev)
+                            struct net_device *sb_dev)
 #elif (LINUX_VERSION_CODE>=KERNEL_VERSION(4,19,0))
 static u16 rtw_select_queue(struct net_device *dev, struct sk_buff *skb,
-			    struct net_device *sb_dev,
-			    select_queue_fallback_t fallback)
+                            struct net_device *sb_dev,
+                            select_queue_fallback_t fallback)
 #elif (LINUX_VERSION_CODE>=KERNEL_VERSION(3,14,0))
 static u16 rtw_select_queue(struct net_device *dev, struct sk_buff *skb,
-			    void *accel_priv,
-			    select_queue_fallback_t fallback)
+                            void *accel_priv,
+                            select_queue_fallback_t fallback)
 #else
 static u16 rtw_select_queue(struct net_device *dev, struct sk_buff *skb)
 #endif
@@ -1073,10 +1102,6 @@ int rtw_init_netdev_name(struct net_device *pnetdev, const char *ifname)
 	return 0;
 }
 
-static const struct device_type wlan_type = {
-	.name = "wlan",
-};
-
 struct net_device *rtw_init_netdev(_adapter *old_padapter)
 {
 	_adapter *padapter;
@@ -1092,7 +1117,6 @@ struct net_device *rtw_init_netdev(_adapter *old_padapter)
 	if (!pnetdev)
 		return NULL;
 
-	pnetdev->dev.type = &wlan_type;
 	padapter = rtw_netdev_priv(pnetdev);
 	padapter->pnetdev = pnetdev;
 
@@ -1340,7 +1364,7 @@ void devobj_deinit(struct dvobj_priv *pdvobj)
 	_rtw_mutex_free(&pdvobj->setbw_mutex);
 
 	rtw_mfree((u8*)pdvobj, sizeof(*pdvobj));
-}
+}	
 
 u8 rtw_reset_drv_sw(_adapter *padapter)
 {
@@ -1464,7 +1488,7 @@ _func_enter_;
 	}
 	// add for CONFIG_IEEE80211W, none 11w also can use
 	_rtw_spinlock_init(&padapter->security_key_mutex);
-
+	
 	// We don't need to memset padapter->XXX to zero, because adapter is allocated by rtw_zvmalloc().
 	//_rtw_memset((unsigned char *)&padapter->securitypriv, 0, sizeof (struct security_priv));
 
@@ -1594,7 +1618,7 @@ u8 rtw_free_drv_sw(_adapter *padapter)
 	#endif
 	// add for CONFIG_IEEE80211W, none 11w also can use
 	_rtw_spinlock_free(&padapter->security_key_mutex);
-
+	
 #ifdef CONFIG_BR_EXT
 	_rtw_spinlock_free(&padapter->br_ext_lock);
 #endif	// CONFIG_BR_EXT
@@ -2498,6 +2522,7 @@ int _netdev_open(struct net_device *pnetdev)
 			goto netdev_open_error;
 		}
 
+
 #ifdef CONFIG_DRVEXT_MODULE
 		init_drvext(padapter);
 #endif
@@ -2537,6 +2562,7 @@ int _netdev_open(struct net_device *pnetdev)
 #endif	// CONFIG_BR_EXT
 
 netdev_open_normal_process:
+        RT_MOD_INC_USE_COUNT();
 
 	#ifdef CONFIG_CONCURRENT_MODE
 	{
@@ -2755,6 +2781,8 @@ static int netdev_close(struct net_device *pnetdev)
 	RT_TRACE(_module_os_intfs_c_,_drv_info_,("-871x_drv - drv_close\n"));
 	DBG_871X("-871x_drv - drv_close, bup=%d\n", padapter->bup);
 
+        RT_MOD_DEC_USE_COUNT();
+
 	return 0;
 }
 
@@ -2768,4 +2796,3 @@ void rtw_ndev_destructor(struct net_device *ndev)
 #endif
 	free_netdev(ndev);
 }
-

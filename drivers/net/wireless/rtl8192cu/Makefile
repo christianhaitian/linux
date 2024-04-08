@@ -1,9 +1,9 @@
 EXTRA_CFLAGS += $(USER_EXTRA_CFLAGS)
 EXTRA_CFLAGS += -O1
 #EXTRA_CFLAGS += -O3
-EXTRA_CFLAGS += -Wno-all
+#EXTRA_CFLAGS += -Wall
 #EXTRA_CFLAGS += -Wextra
-EXTRA_CFLAGS += -Wno-error
+#EXTRA_CFLAGS += -Werror
 #EXTRA_CFLAGS += -pedantic
 #EXTRA_CFLAGS += -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes
 
@@ -39,13 +39,13 @@ CONFIG_INTEL_WIDI = n
 CONFIG_WAKE_ON_WLAN = n
 
 CONFIG_PLATFORM_I386_PC = y
-CONFIG_PLATFORM_ARM_GENERIC = n
 CONFIG_PLATFORM_TI_AM3517 = n
 CONFIG_PLATFORM_ANDROID_X86 = n
 CONFIG_PLATFORM_JB_X86 = n
 CONFIG_PLATFORM_ARM_S3C2K4 = n
 CONFIG_PLATFORM_ARM_PXA2XX = n
 CONFIG_PLATFORM_ARM_S3C6K4 = n
+CONFIG_PLATFORM_ARM_BCM283x = n
 CONFIG_PLATFORM_MIPS_RMI = n
 CONFIG_PLATFORM_RTD2880B = n
 CONFIG_PLATFORM_MIPS_AR9132 = n
@@ -248,16 +248,6 @@ MODDESTDIR := /lib/modules/$(KVER)/kernel/drivers/net/wireless/
 INSTALL_PREFIX :=
 endif
 
-ifeq ($(CONFIG_PLATFORM_ARM_GENERIC), y)
-EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
-ARCH := arm
-KVER := $(shell uname -r)
-KSRC := /lib/modules/$(KVER)/build
-$(info KSRC is $(KSRC))
-MODDESTDIR := /lib/modules/$(KVER)/kernel/drivers/net/wireless/
-INSTALL_PREFIX :=
-endif
-
 ifeq ($(CONFIG_PLATFORM_TI_AM3517), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN -DCONFIG_PLATFORM_ANDROID -DCONFIG_PLATFORM_SHUTTLE
 CROSS_COMPILE := arm-eabi-
@@ -325,6 +315,16 @@ ARCH := arm
 CROSS_COMPILE := arm-none-linux-gnueabi-
 KVER  := 2.6.34.1
 KSRC ?= /usr/src/linux-2.6.34.1
+endif
+
+ifeq ($(CONFIG_PLATFORM_ARM_BCM283x), y)
+EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
+ARCH := arm
+CROSS_COMPILE ?=
+KVER  := $(shell uname -r)
+KSRC := /lib/modules/$(KVER)/build
+MODDESTDIR := /lib/modules/$(KVER)/kernel/drivers/net/wireless/
+INSTALL_PREFIX :=
 endif
 
 ifeq ($(CONFIG_PLATFORM_RTD2880B), y)
@@ -600,6 +600,17 @@ strip:
 install:
 	install -p -m 644 $(MODULE_NAME).ko  $(MODDESTDIR)
 	/sbin/depmod -a ${KVER}
+	echo "blacklist rtl8192cu" >> /etc/modprobe.d/blacklist.conf
+
+dkms:	clean
+	rm -rf /usr/src/$(MODULE_NAME)-4.0.29
+	mkdir /usr/src/$(MODULE_NAME)-4.0.29 -p
+	cp . /usr/src/$(MODULE_NAME)-4.0.29 -a
+	rm -rf /usr/src/$(MODULE_NAME)-4.0.29/.git
+	dkms add -m $(MODULE_NAME) -v 4.0.29
+	dkms build -m $(MODULE_NAME) -v 4.0.29
+	dkms install -m $(MODULE_NAME) -v 4.0.29 --force
+	echo "blacklist rtl8192cu" >> /etc/modprobe.d/blacklist.conf
 
 uninstall:
 	rm -f $(MODDESTDIR)/$(MODULE_NAME).ko
