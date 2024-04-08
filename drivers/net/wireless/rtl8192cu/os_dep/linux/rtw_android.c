@@ -18,6 +18,9 @@
  *
  ******************************************************************************/
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wint-conversion"
+#pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
 #include <linux/module.h>
 #include <linux/netdevice.h>
 
@@ -97,8 +100,12 @@ typedef struct cmd_tlv {
 
 typedef struct android_wifi_priv_cmd {
 
-
+#ifdef CONFIG_COMPAT
+	compat_uptr_t buf;
+#else
 	char *buf;
+#endif
+
 	int used_len;
 	int total_len;
 } android_wifi_priv_cmd;
@@ -370,7 +377,11 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 		goto exit;
 	}
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
+	if (!access_ok(priv_cmd.buf, priv_cmd.total_len)){
+#else
 	if (!access_ok(VERIFY_READ, priv_cmd.buf, priv_cmd.total_len)){
+#endif
 	 	DBG_871X("%s: failed to access memory\n", __FUNCTION__);
 		ret = -EFAULT;
 		goto exit;
@@ -832,4 +843,5 @@ static void wifi_del_dev(void)
 	platform_driver_unregister(&wifi_device_legacy);
 }
 #endif /* defined(RTW_ENABLE_WIFI_CONTROL_FUNC) */
+#pragma GCC diagnostic pop
 
