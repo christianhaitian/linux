@@ -13,7 +13,7 @@
 #include "rk3326-linux.dtsi"
 
 / {
-	model = "BatleXP G-G-G-G350";
+	model = "BatleXP G-G-G-G350!";
 	compatible = "rockchip,rk3326-odroidgo3-linux", "rockchip,rk3326";
 
 	chosen {
@@ -98,7 +98,6 @@
 		amux-b-gpios = <&gpio3 RK_PB0 GPIO_ACTIVE_LOW>;
 		/* adc mux enable gpio */
 		amux-en-gpios = <&gpio3 RK_PB5 GPIO_ACTIVE_LOW>;
-
 		/* adc calculate scale */
 		button-adc-scale = <2>;
 
@@ -132,10 +131,12 @@
 		/* poll device interval (ms), adc read interval */
 		poll-interval = <10>;
 
-		/* required for RG351MP */
+		/* required for G-G-G-G350! */
 		invert-absx;
 		invert-absy;
-		
+		invert-absrx;
+		//invert-absry;
+        turn-absr;
 		/* gpio button auto repeat set value : default disable */
 		/*
 			autorepeat;
@@ -349,7 +350,6 @@
 		regulator-min-microvolt = <3800000>;
 		regulator-max-microvolt = <3800000>;
 	};
-
 };
 
 &bus_apll {
@@ -462,7 +462,7 @@
 		display-timings {
 			native-mode = <&timing0>;
 
-			timing0: 60Hz {
+			timing0: timing0 {
 				clock-frequency = <50000000>;
 				hactive = <640>;
 				vactive = <480>;
