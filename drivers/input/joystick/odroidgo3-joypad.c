@@ -1002,6 +1002,20 @@ static int joypad_adc_setup(struct device *dev, struct joypad *joypad)
 					__func__, nbtn);
 				return -EINVAL;
 		}
+		/*
+		 * Minimal change:
+		 * Try to read the physical MUX channel for this logical axis
+		 * from DTS property "amux-channel-mapping".
+		 * If the property is missing or shorter than amux_count,
+		 * fall back to the original default mapping (adc->amux_ch = nbtn).
+		 *
+		 * Example DTS:
+		 *   amux-channel-mapping = <2 3 1 0>;
+		 */
+		if (of_property_read_u32_index(dev->of_node,
+					       "amux-channel-mapping",
+					       nbtn, &adc->amux_ch))
+			adc->amux_ch = nbtn;
 	}
 	return	0;
 }
