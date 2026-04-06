@@ -17,28 +17,21 @@
  *
  *
  ******************************************************************************/
-#ifndef _RTW_SRESET_H_
-#define _RTW_SRESET_H_
+#ifndef _RTW_SRESET_C_
+#define _RTW_SRESET_C_
 
-/* #include <drv_types.h> */
-
-enum {
-	SRESET_TGP_NULL = 0,
-	SRESET_TGP_XMIT_STATUS = 1,
-	SRESET_TGP_LINK_STATUS = 2,
-};
+#include <osdep_service.h>
+#include <drv_types.h>
 
 struct sreset_priv {
-	_mutex	silentreset_mutex;
+	struct mutex	silentreset_mutex;
 	u8	silent_reset_inprogress;
 	u8	Wifi_Error_Status;
 	unsigned long last_tx_time;
 	unsigned long last_tx_complete_time;
-
-	s32 dbg_trigger_point;
 };
 
-
+#include <rtl8188e_hal.h>
 
 #define	WIFI_STATUS_SUCCESS		0
 #define	USB_VEN_REQ_CMD_FAIL	BIT0
@@ -47,14 +40,11 @@ struct sreset_priv {
 #define	WIFI_MAC_TXDMA_ERROR	BIT3
 #define   WIFI_TX_HANG				BIT4
 #define	WIFI_RX_HANG				BIT5
-#define	WIFI_IF_NOT_EXIST			BIT6
+#define		WIFI_IF_NOT_EXIST			BIT6
 
-void sreset_init_value(_adapter *padapter);
-void sreset_reset_value(_adapter *padapter);
-u8 sreset_get_wifi_status(_adapter *padapter);
-void sreset_set_wifi_error_status(_adapter *padapter, u32 status);
-void sreset_set_trigger_point(_adapter *padapter, s32 tgp);
-bool sreset_inprogress(_adapter *padapter);
-void sreset_reset(_adapter *padapter);
+void sreset_init_value(struct adapter *padapter);
+void sreset_reset_value(struct adapter *padapter);
+u8 sreset_get_wifi_status(struct adapter *padapter);
+void sreset_set_wifi_error_status(struct adapter *padapter, u32 status);
 
 #endif

@@ -40,7 +40,6 @@
 #define IPTOS_PREC_PRIORITY             0x20
 #define IPTOS_PREC_ROUTINE              0x00
 
-
 /* IP options */
 #define IPOPT_COPY		0x80
 #define IPOPT_CLASS_MASK	0x60
@@ -68,15 +67,6 @@
 #define IPVERSION	4
 #define MAXTTL		255
 #define IPDEFTTL	64
-
-/* struct timestamp, struct route and MAX_ROUTES are removed.
-
-   REASONS: it is clear that nobody used them because:
-   - MAX_ROUTES value was wrong.
-   - "struct route" was wrong.
-   - "struct timestamp" had fatally misaligned bitfields and was completely unusable.
- */
-
 #define IPOPT_OPTVAL 0
 #define IPOPT_OLEN   1
 #define IPOPT_OFFSET 2
@@ -86,26 +76,24 @@
 #define IPOPT_EOL IPOPT_END
 #define IPOPT_TS  IPOPT_TIMESTAMP
 
-#define	IPOPT_TS_TSONLY		0		/* timestamps only */
-#define	IPOPT_TS_TSANDADDR	1		/* timestamps and addresses */
-#define	IPOPT_TS_PRESPEC	3		/* specified modules only */
-
-#ifdef PLATFORM_LINUX
+#define	IPOPT_TS_TSONLY		0	/* timestamps only */
+#define	IPOPT_TS_TSANDADDR	1	/* timestamps and addresses */
+#define	IPOPT_TS_PRESPEC	3	/* specified modules only */
 
 struct ip_options {
-	__u32		faddr;				/* Saved first hop address */
+	__u32		faddr;			/* Saved first hop address */
 	unsigned char	optlen;
 	unsigned char srr;
 	unsigned char rr;
 	unsigned char ts;
-	unsigned char is_setbyuser:1,			/* Set by setsockopt?			*/
-		 is_data:1,			/* Options in __data, rather than skb	*/
-		 is_strictroute:1,		/* Strict source route			*/
-		 srr_is_hit:1,			/* Packet destination addr was our one	*/
-		 is_changed:1,			/* IP checksum more not valid		*/
-		 rr_needaddr:1,			/* Need to record addr of outgoing dev	*/
-		 ts_needtime:1,			/* Need to record timestamp		*/
-		 ts_needaddr:1;			/* Need to record addr of outgoing dev */
+	unsigned char	is_setbyuser:1,	/* Set by setsockopt?		*/
+			is_data:1,	/* Options in __data, rather than skb*/
+			is_strictroute:1,/* Strict source route		*/
+			srr_is_hit:1,	/* Packet destn addr was ours */
+			is_changed:1,	/* IP checksum more not valid	*/
+			rr_needaddr:1,	/* Need to record addr of out dev*/
+			ts_needtime:1,	/* Need to record timestamp	*/
+			ts_needaddr:1;	/* Need to record addr of out dev  */
 	unsigned char router_alert;
 	unsigned char __pad1;
 	unsigned char __pad2;
@@ -113,17 +101,14 @@ struct ip_options {
 };
 
 #define optlength(opt) (sizeof(struct ip_options) + opt->optlen)
-#endif
 
 struct iphdr {
 #if defined(__LITTLE_ENDIAN_BITFIELD)
 	__u8	ihl:4,
 		version:4;
-#elif defined (__BIG_ENDIAN_BITFIELD)
+#elif defined(__BIG_ENDIAN_BITFIELD)
 	__u8	version:4,
 		ihl:4;
-#else
-#error	"Please fix <asm/byteorder.h>"
 #endif
 	__u8	tos;
 	__u16	tot_len;
