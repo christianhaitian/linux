@@ -852,9 +852,9 @@
 
 		battery {
 			compatible = "rk817,battery";
-			ocv_table = <3165 3220 3280 3330 3380 3430 3480
-			3530 3580 3630 3670 3710 3750 3790
-			3830 3870 3910 3950 3990 3995 4000>;
+			ocv_table = <3400 3445 3502 3552 3598 3637 3679
+			3733 3782 3823 3865 3890 3904 3929
+			3977 4017 4022 4038 4067 4123 4177>;
 
 
 			/* KPL605475 Battery Spec */
@@ -873,7 +873,7 @@
 			sleep_enter_current = <300>;
 			sleep_exit_current = <300>;
 			sleep_filter_current = <100>;
-			power_off_thresd = <3000>;
+			power_off_thresd = <3300>;
 			zero_algorithm_vol = <3850>;
 			max_soc_offset = <60>;
 			monitor_sec = <5>;
@@ -1142,4 +1142,5 @@
 /* DON'T PUT ANYTHING BELOW HERE.  PUT IT ABOVE PINCTRL */
 /* DON'T PUT ANYTHING BELOW HERE.  PUT IT ABOVE PINCTRL */
 /* DON'T PUT ANYTHING BELOW HERE.  PUT IT ABOVE PINCTRL */
+
 
