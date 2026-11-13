@@ -351,6 +351,8 @@
 };
 
 &cpu0_opp_table {
+	/* V4: PVTM sits on the bin-0/1 edge; bin 1 undervolts and oopses. Pin bin 0. */
+	/delete-property/ rockchip,pvtm-voltage-sel;
 	rockchip,avs = <1>;
 
 	/* bin scaling clock 1.296MHz */
@@ -515,16 +517,15 @@
 };
 
 &dmc_opp_table {
+	/* V4: pin bin 0, and keep 786 MHz off as stock does */
+	/delete-property/ rockchip,pvtm-voltage-sel;
 	/delete-node/ opp-194000000;
 	/delete-node/ opp-328000000;
 	/delete-node/ opp-450000000;
-
-	opp-786000000 {
-		status = "okay";
-	};
 };
 
 &gpu_opp_table {
+	/delete-property/ rockchip,pvtm-voltage-sel;
 	/delete-node/ opp-200000000;
 	/delete-node/ opp-300000000;
 };
@@ -747,7 +748,7 @@
 
 			vcc_sd: LDO_REG6 {
 				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <3000000>;
+				regulator-max-microvolt = <3300000>;
 				regulator-boot-on;
 
 				regulator-name = "vcc_sd";
